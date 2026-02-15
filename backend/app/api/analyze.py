@@ -1,15 +1,15 @@
 from fastapi import APIRouter
 from app.schemas.analyze import AnalyzeRequest
-from app.services.parser_service import parse_stack_trace
+from app.services.parser_service import parse_python_error
 
 router = APIRouter()
 
 
-@router.post("/analyze-error")
-def analyze_error(request: AnalyzeRequest):
-    parsed = parse_stack_trace(request.stack_trace)
+@router.post("/analyze")
+def analyze_log(request: AnalyzeRequest):
+    parsed_data = parse_python_error(request.log_text, request.stack_trace)
 
     return {
-        "parsed_error": parsed,
-        "status": "analysis_complete"
+        "status": "success",
+        "parsed_error": parsed_data
     }

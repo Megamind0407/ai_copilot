@@ -1,38 +1,32 @@
 import re
-from typing import Dict
+from typing import Dict, Optional
 
 
-def parse_stack_trace(trace: str) -> Dict:
+def parse_python_error(log_text: str, stack_trace: str) -> Dict[str, Optional[str]]:
     """
-    Parse a Python stack trace and extract:
-    - exception type
-    - error message
-    - file name
-    - line number
+    Parse Python error logs and return structured debugging info.
     """
 
-    # Default response structure
-    parsed_data = {
-        "exception": "UnknownError",
-        "message": "No message found",
-        "file": "Unknown file",
-        "line": -1,
+    error_type = None
+    error_message = None
+    file_name = None
+    line_number = None
+
+    # -------- Extract error type & message --------
+    error_match = re.search(r"(\w+Error):\s*(.*)", log_text)
+    if error_match:
+        error_type = error_match.group(1)
+        error_message = error_match.group(2)
+
+    # -------- Extract file & line number --------
+    file_match = re.search(r'File "(.+?)", line (\d+)', stack_trace)
+    if file_match:
+        file_name = file_match.group(1)
+        line_number = file_match.group(2)
+
+    return {
+        "error_type": error_type,
+        "error_message": error_message,
+        "file_name": file_name,
+        "line_number": line_number,
     }
-
-    if not trace or not trace.strip():
-        return parsed_data
-
-    # Extract exception and message
-    exception_match = re.search(r"(\w+Error): (.+)", trace)
-    if exception_match:
-        parsed_data["exception"] = exception_match.group(1)
-        parsed_data["message"] = exception_match.group(2)
-
-    # Extract last file + line occurrence (most relevant frame)
-    file_matches = re.findall(r'File "(.+?)", line (\d+)', trace)
-    if file_matches:
-        last_file, last_line = file_matches[-1]
-        parsed_data["file"] = last_file
-        parsed_data["line"] = int(last_line)
-
-    return parsed_data
